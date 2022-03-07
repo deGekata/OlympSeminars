@@ -33,11 +33,11 @@ int vector_push(struct vector *v, void const *elem) {
         return 1;
     }
 
-    char* s_ptr = (char*) realloc(v->data, (v->capacity * extend_coef + 1) * v->elem_size);
+    v->data = (char*) realloc(v->data, (v->capacity * extend_coef + 1) * v->elem_size);
 
-    if (s_ptr == NULL || v->data == NULL) return 1;
+    // if (s_ptr == NULL || v->data == NULL) return 1;
 
-    v->data = s_ptr;
+    // v->data = s_ptr;
     v->capacity = v->capacity * extend_coef + 1;
 
     memcpy(v->data + v->size * v->elem_size, elem, v->elem_size);
@@ -69,7 +69,7 @@ int vector_empty(struct vector const *st) {
 
 struct vector *vector_delete(struct vector *v) {
     if (v == NULL) return NULL;
-    free(v->data);
+    if (v->data != NULL) free(v->data);
     free(v);
     return NULL;
 }
@@ -118,13 +118,18 @@ int vector_get(struct vector const *v, size_t index, void *elem) {
 1 в противном случае.*/
 
 int vector_resize(struct vector *v, size_t new_size) {
-    if (v == NULL) return 1;
+    if (v == NULL || v->data == NULL) return 1;
 
-    char* s_ptr = (char*) realloc(v->data, (new_size + 1)  * v->elem_size);
+    if (new_size <= v->capacity) {
+        v->size = new_size;
+        return 0;
+    }
 
-    if (s_ptr == NULL || v->data == NULL) return 1;
+    v->data = (char*) realloc(v->data, (new_size + 1)  * v->elem_size);
 
-    v->data = s_ptr;
+    // if (s_ptr == NULL || v->data == NULL) return 1;
+
+    
     v->size = new_size;
 
     v->capacity = (new_size + 1);

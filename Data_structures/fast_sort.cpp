@@ -2,7 +2,7 @@
 #include <inttypes.h>
 #include <stdio.h>
 
-uint32_t get_byte(size_t num, int ord_num, int bytes_to_take){
+uint32_t inline get_byte(size_t num, int ord_num, int bytes_to_take){
     return ((unsigned long long)num << ((sizeof (num) - bytes_to_take - ord_num * bytes_to_take) * 8)) >> (sizeof (num) * 8 - 8 * bytes_to_take);
 }
 
@@ -39,7 +39,7 @@ void Radix_sort(uint32_t Temp[], int length, int bytes_to_take) {
         //  std::swap(Temp, Temp2);
          //std::cout<<"swaped\n";
      }
-     free(Temp2);
+    free(Temp2);
     free(byte_var);
      return;
 }
@@ -110,4 +110,55 @@ int main() {
     free(array);
     // Now array = {1,1,2,3,4,5,6,9}
 }
-     
+
+
+
+
+
+
+// uint32_t get_byte(size_t num, int ord_num, int bytes_to_take){
+//     return ((unsigned long long)num << ((sizeof (num) - bytes_to_take - ord_num * bytes_to_take) * 8)) >> (sizeof (num) * 8 - 8 * bytes_to_take);
+// }
+
+// void Radix_sort(uint32_t Temp[], int length, int bytes_to_take) {
+//      int cnt_bytes = sizeof (Temp[0]) / bytes_to_take;
+//      //std::cout << " bytes " << cnt_bytes << "\n";
+//      int cnt = 1 << (bytes_to_take * 8);
+//      uint32_t* Temp2 = (uint32_t*) calloc(length, sizeof(*Temp2));
+//      uint32_t* byte_var = (uint32_t*) malloc(cnt * sizeof(*byte_var));
+//      for (int byte = 0; byte < cnt_bytes; ++byte) {
+//          for (size_t it = 0; it < cnt; ++it) byte_var[it] = 0;
+//          //std::cout << "byte_num: " << byte << "\n";
+//          for (int iter = 0; iter < length; ++iter) {
+//              byte_var[get_byte(Temp[iter], byte, bytes_to_take)]++;
+//              //std::cout << get_byte(Temp[iter], byte, bytes_to_take) << " " << Temp[iter] << "\n";
+//          }
+
+//          int count = 0;
+//          int temp;
+//          for (int iter = 0; iter < cnt; ++iter) {
+//              temp = byte_var[ iter ];
+//              byte_var[ iter ] = count;
+//              count += temp;
+//          }
+//          //std::cout<<"swaped\n";
+//          for (int iter = 0; iter < length; ++iter) {
+//              temp = get_byte(Temp[ iter ], byte, bytes_to_take);
+//              Temp2[byte_var[temp]] = Temp[ iter ];
+//              byte_var[ temp ]++;
+//          }
+//          uint32_t* tmp = Temp;
+//          Temp = Temp2;
+//          Temp2 = tmp;
+//         //  std::swap(Temp, Temp2);
+//          //std::cout<<"swaped\n";
+//      }
+//      free(Temp2);
+//     free(byte_var);
+//      return;
+// }
+// //###################################################################################################################################################
+
+// void fast_sort(unsigned *begin, unsigned *end) {
+//     Radix_sort(begin, end - begin, 1);
+// }
