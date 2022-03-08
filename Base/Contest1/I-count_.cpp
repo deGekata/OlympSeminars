@@ -6,12 +6,8 @@
 #include <ctype.h>
 
 
-enum State {
-    ftype   
-}
-
 int main() {
-    enum
+    
     // char* buff = (char*) malloc(siz'0'(char) * 600000);
     int ftype = 0, stype = 0, ttype = 0, littype = 0;
     char ch = getchar();
