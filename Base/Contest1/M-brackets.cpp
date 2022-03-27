@@ -82,15 +82,11 @@ struct stack *stack_delete(struct stack *st) {
 
 int main() {
     struct stack* st = stack_new(sizeof(char));
+    char ch = getchar();
 
-    char* arr = (char*) malloc(102400 * sizeof(char));
-    scanf("%s", arr);
-    int N = strlen(arr);
-
-    for (int it = 0; it < N; ++it) {
-
-        if (arr[it] == '<' || arr[it] == '[' || arr[it] == '(' || arr[it] == '{') {
-            stack_push(st, &arr[it]);
+    while (ch != '\n') {
+        if (ch == '<' || ch == '[' || ch == '(' || ch == '{') {
+            stack_push(st, &ch);
         } else {
             if (stack_empty(st)) {
                 printf("NO");
@@ -98,16 +94,18 @@ int main() {
             }
             char tmp;
             stack_pop(st, &tmp);
-            if ((tmp == '(' && arr[it] == ')') ||
-                (tmp == '[' && arr[it] == ']') ||
-                (tmp == '<' && arr[it] == '>') ||
-                (tmp == '{' && arr[it] == '}')) {
+            if ((tmp == '(' && ch == ')') ||
+                (tmp == '[' && ch == ']') ||
+                (tmp == '<' && ch == '>') ||
+                (tmp == '{' && ch == '}')) {
+                    ch = getchar();
                     continue;
             }
             stack_delete(st);
             printf("NO");
             return 0;
         }
+        ch = getchar();
     }
     if (stack_empty(st))
         printf("YES");

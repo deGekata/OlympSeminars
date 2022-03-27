@@ -87,25 +87,8 @@ static int Solve(int cost, int N, int *money) {
 }
 
 
-int mainH() {
-    int N = 0, cost = 0;
-    scanf("%d %d", &cost, &N);
-
-    int sum = 0;
-    int money[16] = {0};
-    for (size_t i = 0; i < N; ++i) {
-        scanf("%d", money + i);
-        sum += money[i];
-    }
-
-    if (sum * 2 < cost) {
-        printf("Impossible");
-        return 0;
-    }
-
-    int ans = Solve(cost, N, money);
-    if (ans < INF) printf("%d", ans);
-    else printf("Change");
+int main() {
+    printf("%%");
     return 0;
 }
 

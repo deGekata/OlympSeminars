@@ -18,7 +18,7 @@ int main() {
         scanf("%ld", arr + it);
     }
 
-    int64_t lhs, rhs, prev, space, ans = 0;
+    int64_t lhs, rhs, prev = 0, space, ans = 0;
     for (int it = 0; it  < N; ++it) {
         lhs = rhs = it;
 
@@ -46,5 +46,6 @@ int main() {
     }
 
     printf("%ld", ans);
+    free(arr);
     return 0;
 }
