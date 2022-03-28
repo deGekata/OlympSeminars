@@ -22,17 +22,6 @@ int myStrCmp (const char *s1, const char *s2) {
 
     return strcmp(myStrBuff1, myStrBuff2);
 
-    // printf("%s st\n", myStrBuff1);
-    // while (*p1 != '\0') {
-    //     if (*p2 == '\0') return -1;
-    //     if (*p2 > *p1)   return -1;
-    //     if (*p1 > *p2)   return 1;
-
-    //     p1++;
-    //     p2++;
-    // }
-
-    // if (*p2 != '\0') return 11;
 
     return 0;
 }

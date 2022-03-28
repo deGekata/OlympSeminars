@@ -49,6 +49,7 @@ int64_t merge(int64_t array[], int64_t const left, int64_t const mid,
     return inv_cnt;
 }
 
+
 int64_t mergeSort(int64_t array[], int64_t begin, int64_t end) {
     if (begin >= end) return 0;
 
