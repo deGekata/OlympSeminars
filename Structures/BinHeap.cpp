@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <stdio.h>
 
 typedef int64_t heap_type;
 
@@ -9,9 +10,9 @@ struct binHeap {
     int64_t size;
     int64_t capacity;
     heap_type* data;
+    bool (*cmp_func)(heap_type, heap_type);
 };
 
-#include <stdio.h>
 
 
 
@@ -27,9 +28,9 @@ void heapSiftDown(binHeap* heap, int64_t index);
 
 void heapInsert(binHeap* heap, heap_type elem);
 
-heap_type heapGetMin(binHeap* heap);
+heap_type heapGetTop(binHeap* heap);
 
-heap_type heapExtractMIn(binHeap* heap);
+heap_type heapExtractTop(binHeap* heap);
 
 
 
@@ -68,8 +69,9 @@ void swap(double* lft, double* rht) {
     return;
 }
 
-binHeap* createHeap(heap_type* data, int64_t size) {
+binHeap* createHeap(heap_type* data, int64_t size, bool (*cmp_func)(heap_type, heap_type)) {
     binHeap* heap = (binHeap*) malloc(sizeof(binHeap));
+    heap->cmp_func = cmp_func;
     int binpw = 1;
     while (binpw < size) binpw <<= 1;
     binpw++;
@@ -88,6 +90,21 @@ binHeap* createHeap(heap_type* data, int64_t size) {
     return heap;
 }
 
+binHeap* createHeap(int64_t size, bool (*cmp_func)(heap_type, heap_type)) {
+    binHeap* heap = (binHeap*) malloc(sizeof(binHeap));
+    heap->cmp_func = cmp_func;
+    int binpw = 1;
+    while (binpw < size) binpw <<= 1;
+    binpw++;
+
+    heap->size = 0;
+    heap->capacity = binpw;
+
+    heap->data = (heap_type*) malloc(sizeof(heap_type) * binpw);
+    
+    return heap;
+}
+
 inline int64_t heapLeftSon(int64_t index) {
     return index * 2;
 }
@@ -100,7 +117,7 @@ inline int64_t heapRightSon(int64_t index) {
 void heapSiftUp(binHeap* heap, int64_t index) {
     assert(heap && "heap ptr must not be NULL");
     assert(index <= heap->size);
-    while (index > 1 && heap->data[index] > heap->data[index / 2]) {
+    while (index > 1 && heap->cmp_func(heap->data[index / 2], heap->data[index])) {
         swap(heap->data + index, heap->data + index / 2);
         index /= 2;
     }
@@ -114,10 +131,10 @@ void heapSiftDown(binHeap* heap, int64_t index) {
     while (2 * index <= heap->size) {
         int64_t left = heapLeftSon(index);
         int64_t right = heapRightSon(index);
+        
+        int64_t dest = (right <= heap->size && heap->cmp_func(heap->data[left], heap->data[right]) ? right : left);
 
-        int64_t dest = (right <= heap->size && heap->data[right] > heap->data[left] ? right : left);
-
-        if (heap->data[index] >= heap->data[dest])
+        if (heap->cmp_func(heap->data[dest], heap->data[index]) || heap->data[dest] == heap->data[index])
             break;
         
         swap(heap->data + index, heap->data + dest);
@@ -135,13 +152,13 @@ void heapInsert(binHeap* heap, heap_type elem) {
 
 }
 
-heap_type heapGetMin(binHeap* heap) {
+heap_type heapGetTop(binHeap* heap) {
     assert(heap && "heap ptr must not be NULL");
     
     return heap->data[1];
 }
 
-heap_type heapExtractMIn(binHeap* heap) {
+heap_type heapExtractTop(binHeap* heap) {
     assert(heap->size > 0);
 
     heap_type ret_val = heap->data[1];
@@ -172,15 +189,26 @@ void heapPrint(binHeap* heap) {
     printf("}\n");
 }
 
+bool cmpl(heap_type lft, heap_type rht) {
+    return lft < rht;
+}
 
+bool cmpg(heap_type lft, heap_type rht) {
+    return lft > rht;
+}
 
 int main() {
+    size_t heaps_cnt = 0;
+    scanf("%lu", &heaps_cnt);
+
+    binHeap* heaps = (binHeap*) calloc(heap)
+
     heap_type arr[10] = {5, 2, 3, 1, 4};
-    binHeap* heap = createHeap(arr, 5);
+    binHeap* heap = createHeap(arr, 5, cmpg);
     printf("heap size :%ld\n", heap->size);
     heapPrint(heap);
     while (heapSize(heap) != 0) {
-        printf("extracted min: %lu\n", heapExtractMIn(heap));
+        printf("extracted min: %lu\n", heapExtractTop(heap));
         heapPrint(heap);
         printf("------------------------\n");
     }
