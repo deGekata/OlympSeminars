@@ -201,7 +201,7 @@ int main() {
     size_t heaps_cnt = 0;
     scanf("%lu", &heaps_cnt);
 
-    binHeap* heaps = (binHeap*) calloc(heap)
+    binHeap* heaps = (binHeap*) calloc(1, sizeof(binHeap));
 
     heap_type arr[10] = {5, 2, 3, 1, 4};
     binHeap* heap = createHeap(arr, 5, cmpg);
