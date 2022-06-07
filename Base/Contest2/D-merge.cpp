@@ -72,7 +72,7 @@ int main() {
         #endif
         for (int it = N - f_size; it < ins_pos; ++it) {
             if (odd_flag) {
-                cur_sum += arr[it];
+                cur_sum = (cur_sum + arr[it]) % 1000000000;
                 odd_flag = 0;
             } else {
                 odd_flag = 1;
@@ -80,7 +80,7 @@ int main() {
         }
 
         if (odd_flag) {
-            cur_sum += cur_s_elem;
+            cur_sum = (cur_sum + cur_s_elem)  % 1000000000;
             odd_flag = 0;
         } else {
             odd_flag = 1;
@@ -88,7 +88,7 @@ int main() {
 
         for (int it = ins_pos; it < N; ++it) {
             if (odd_flag) {
-                cur_sum += arr[it];
+                cur_sum = (cur_sum + arr[it]) % 1000000000;
                 odd_flag = 0;
             } else {
                 odd_flag = 1;
@@ -105,7 +105,7 @@ int main() {
         #endif
         for (size_t it = N - s_size; it < N; ++it) {
             if (odd_flag) {
-                cur_sum += cur_s_elem;
+                cur_sum = (cur_sum + cur_s_elem) % 1000000000;
                 #ifdef DEBUG
                 printf("cursum__ %ld\n", cur_sum);
                 #endif
