@@ -1,323 +1,227 @@
 #include <stdlib.h>
-#include <stdint.h>
 #include <stdio.h>
+#include <limits.h>
 #include <string.h>
-#include <assert.h>
 
-const int32_t CAPACITY = 50000;
-
-enum states {
-    EMPTY = 0,
-    DELETED,
-    BUSY,
+struct entry_s {
+	char *key;
+	char *value;
+	struct entry_s *next;
 };
 
-struct pair {
-    uint32_t* key;
+typedef struct entry_s entry_t;
+
+struct hashtable_s {
+	int size;
+	struct entry_s **table;	
 };
 
-struct hashT {
-    pair* data;
-    char*   state;
+typedef struct hashtable_s hashtable_t;
 
-    uint32_t capacity;
-};
+hashtable_t *ht_create( int size ) {
 
-#define AMOUNT 255
+	hashtable_t *hashtable = NULL;
+	int i;
 
-void fast_sort(unsigned *begin, unsigned *end) {
-    uint32_t countArr[4][AMOUNT + 2];
-    memset(countArr[0], 0, sizeof(uint32_t) * (AMOUNT + 2));
-    memset(countArr[1], 0, sizeof(uint32_t) * (AMOUNT + 2));
-    memset(countArr[2], 0, sizeof(uint32_t) * (AMOUNT + 2));
-    memset(countArr[3], 0, sizeof(uint32_t) * (AMOUNT + 2));
+	if( size < 1 ) return NULL;
 
-    uint8_t   oddFlag         = 0;
-    uint32_t* copyArr         = (uint32_t*) calloc(sizeof(uint32_t), end - begin);
+	if( ( hashtable = (hashtable_t*) malloc( sizeof( hashtable_t ) ) ) == NULL ) {
+		return NULL;
+	}
 
-    for (uint32_t* curPtr = begin; curPtr < end; curPtr++) {
-        countArr[0][((*curPtr) & AMOUNT)       + 1]++;
-        countArr[1][(((*curPtr) >> 8) & AMOUNT)  + 1]++;
-        countArr[2][(((*curPtr) >> 16) & AMOUNT) + 1]++;
-        countArr[3][(((*curPtr) >> 24) & AMOUNT) + 1]++;
-    }
-    
-    for (uint32_t curCount = 2; curCount < AMOUNT + 2; curCount++) {
-        countArr[0][curCount] += countArr[0][curCount - 1];
-        countArr[1][curCount] += countArr[1][curCount - 1];
-        countArr[2][curCount] += countArr[2][curCount - 1];
-        countArr[3][curCount] += countArr[3][curCount - 1];
-    }
+	if( ( hashtable->table = (entry_s**) malloc( sizeof( entry_t * ) * size ) ) == NULL ) {
+		return NULL;
+	}
+	for( i = 0; i < size; i++ ) {
+		hashtable->table[i] = NULL;
+	}
 
-    if (countArr[0][1] == (end - begin)) {
-        if (oddFlag) {
-            memmove(begin, copyArr, sizeof(uint32_t) * (end - begin));
-        }
-    
-        free(copyArr);
+	hashtable->size = size;
 
-        return;
-    }
-
-    if (!oddFlag) {
-        for (uint32_t* curPtr = begin; curPtr < end; curPtr++) {
-            copyArr[countArr[0][(*curPtr) & AMOUNT]++] = *curPtr;
-        }
-    }
-    else {
-        for (uint32_t* curPtr = copyArr; curPtr < copyArr + (end - begin); curPtr++) {
-            begin[countArr[0][(*curPtr) & AMOUNT]++] = *curPtr;
-        }
-    }
-
-    oddFlag ^= 1;
-
-    if (countArr[1][1] == (end - begin)) {
-        if (oddFlag) {
-            memmove(begin, copyArr, sizeof(uint32_t) * (end - begin));
-        }
-    
-        free(copyArr);
-
-        return;
-    }
-
-    if (!oddFlag) {
-        for (uint32_t* curPtr = begin; curPtr < end; curPtr++) {
-            copyArr[countArr[1][((*curPtr) >> 8) & AMOUNT]++] = *curPtr;
-        }
-    }
-    else {
-        for (uint32_t* curPtr = copyArr; curPtr < copyArr + (end - begin); curPtr++) {
-            begin[countArr[1][((*curPtr) >> 8) & AMOUNT]++] = *curPtr;
-        }
-    }
-
-    oddFlag ^= 1;
-
-    if (countArr[2][1] == (end - begin)) {
-        if (oddFlag) {
-            memmove(begin, copyArr, sizeof(uint32_t) * (end - begin));
-        }
-    
-        free(copyArr);
-
-        return;
-    }
-
-    if (!oddFlag) {
-        for (uint32_t* curPtr = begin; curPtr < end; curPtr++) {
-            copyArr[countArr[2][((*curPtr) >> 16) & AMOUNT]++] = *curPtr;
-        }
-    }
-    else {
-        for (uint32_t* curPtr = copyArr; curPtr < copyArr + (end - begin); curPtr++) {
-            begin[countArr[2][((*curPtr) >> 16) & AMOUNT]++] = *curPtr;
-        }
-    }
-
-    oddFlag ^= 1;
-
-    if (countArr[3][1] == (end - begin)) {
-        if (oddFlag) {
-            memmove(begin, copyArr, sizeof(uint32_t) * (end - begin));
-        }
-    
-        free(copyArr);
-
-        return;
-    }
-       
-
-    if (!oddFlag) {
-        for (uint32_t* curPtr = begin; curPtr < end; curPtr++) {
-            copyArr[countArr[3][((*curPtr) >> 24) & AMOUNT]++] = *curPtr;
-        }
-    }
-    else {
-        for (uint32_t* curPtr = copyArr; curPtr < copyArr + (end - begin); curPtr++) {
-            begin[countArr[3][((*curPtr) >> 24) & AMOUNT]++] = *curPtr;
-        }
-    }
-
-    oddFlag ^= 1;
-    
-
-    if (oddFlag) {
-        memmove(begin, copyArr, sizeof(uint32_t) * (end - begin));
-    }
-    
-    free(copyArr);
-}; 
-
-int32_t arrCmp(uint32_t* elem1, uint32_t* elem2, const uint32_t arrSize) {
-    for (uint32_t curElem = 0; curElem < arrSize; curElem++) {
-        if (elem1[curElem] != elem2[curElem])
-            return 1;
-    }
-    return 0;
+	return hashtable;	
 }
 
-uint32_t H1(uint32_t* s, const uint32_t hashsize, const uint32_t arrSize) {
-    uint32_t sum = 0;
-    const uint32_t FACTOR = 5;
+int ht_hash( hashtable_t *hashtable, char *key ) {
 
-    for (uint32_t curByte = 0; curByte < arrSize; curByte++) {
-        sum <<= FACTOR;
-        sum += *s++;
-    }
+	unsigned long int hashval = 1234567;
+	int i = 0;
 
-    return sum & hashsize;
+	while( hashval < ULONG_MAX && i < strlen( key ) ) {
+		hashval = hashval << 8;
+		hashval += key[ i ];
+		i++;
+	}
+
+	return hashval % hashtable->size;
 }
 
-uint32_t H2(uint32_t* s, const uint32_t hashsize, const uint32_t arrSize) {
-    uint32_t h = 0, a = 31415, b = 27183;
+entry_t *ht_newpair( char *key, char *value ) {
+	entry_t *newpair;
 
-    for (uint32_t curByte = 0; curByte < arrSize; curByte++) {
-        h = (a * h + *s++) % hashsize;
-        a = a * b % (hashsize - 1);
-    }
+	if( ( newpair = (entry_t*) malloc( sizeof( entry_t ) ) ) == NULL ) {
+		return NULL;
+	}
 
-    return h;
+	if( ( newpair->key = strdup( key ) ) == NULL ) {
+		return NULL;
+	}
+
+	if( ( newpair->value = strdup( value ) ) == NULL ) {
+		return NULL;
+	}
+
+	newpair->next = NULL;
+
+	return newpair;
 }
 
-struct hashT* newHT(uint64_t capacity) {
-    hashT* h = (hashT*) calloc(1, sizeof(struct hashT));
-    if (h == NULL)
-        return h;
-
-    h->data  = (pair*) calloc(h->capacity = capacity, sizeof(h->data[0]));
-    h->state = (char*) calloc(capacity, sizeof(h->state[0]));
+void ht_del( hashtable_t *hashtable, char *key){
     
-    if ((h->data == NULL) || (h->state == NULL)) {
-        free(h->state);
-        free(h->data);
-        free(h);
-
-        return NULL;
-    }
+    int bin = 0;
+    int flag =0;
     
-    return h;
-}
-
-int32_t findHT(struct hashT* hT, uint32_t* key, const uint32_t arrSize) {
-    assert(hT != NULL);
-
-    for (uint64_t curPlace = H1(key, hT->capacity, arrSize), increment = H2(key, hT->capacity, arrSize), tries = 0; 
-      tries != hT->capacity; 
-      curPlace = (curPlace + increment) % hT->capacity, tries++) {
-        switch (hT->state[curPlace]) {
-            case BUSY: {
-                if (arrCmp(hT->data[curPlace].key, key, arrSize) == 0) {
-                    return curPlace;
-                }
-                break;
+    entry_t *temp,*pair;
+    
+    bin = ht_hash (hashtable,key);
+    
+    pair = hashtable->table[bin];
+   
+    temp = pair;
+    while(pair != NULL) {
+        if(strcmp(key,pair->key) == 0 ){
+            flag = 1;
+            if(pair == hashtable->table[bin]){
+                hashtable->table[bin] = pair->next;
             }
-            case EMPTY: {
-                return -1;
+            else{
+                temp->next = pair->next;
             }
-
-            case DELETED: 
-                break;
-            default:
-                assert(0);
+            free(pair);
+            break;
         }
-    }
-
-    return 0;
-}
-
-void insertHT(struct hashT* hT, uint32_t* key, const uint32_t arrSize) {
-    assert(hT != NULL);
-
-    for (uint64_t curPlace = H1(key, hT->capacity, arrSize), increment = H2(key, hT->capacity, arrSize), tries = 0; 
-      tries != hT->capacity; 
-      curPlace = (curPlace + increment) % hT->capacity, tries++) {
-          if (hT->state[curPlace] != BUSY) {
-              hT->data[curPlace].key   = key;
-              hT->state[curPlace]      = BUSY;
-              
-              return;
-          }
+        temp = pair;
+        pair = pair->next;
     }
 }
 
-void eraseHT(struct hashT* hT, uint32_t* key, const uint32_t arrSize) {
-    assert(hT != NULL);
+void ht_set( hashtable_t *hashtable, char *key, char *value ) {
+	int bin = 0;
+	entry_t *newpair = NULL;
+	entry_t *next = NULL;
+	entry_t *last = NULL;
 
-    for (uint64_t curPlace = H1(key, hT->capacity, arrSize), increment = H2(key, hT->capacity, arrSize), tries = 0; 
-      tries != hT->capacity; 
-      curPlace = (curPlace + increment) % hT->capacity, tries++) {
-        switch (hT->state[curPlace]) {
-            case BUSY: {
-                if (arrCmp(hT->data[curPlace].key, key, arrSize) == 0) {
-                    hT->state[curPlace] = DELETED;
+	bin = ht_hash( hashtable, key );
 
-                    free(hT->data[curPlace].key);
-                    return;
-                }
-                break;
-            }
-            case EMPTY: {
-                return;
-            }
+	next = hashtable->table[ bin ];
 
-            case DELETED: 
-                break;
-            default:
-                assert(0);
-        }
-    }
+	while( next != NULL && next->key != NULL && strcmp( key, next->key ) > 0 ) {
+		last = next;
+		next = next->next;
+	}
+
+	if( next != NULL && next->key != NULL && strcmp( key, next->key ) == 0 ) {
+
+		free( next->value );
+		next->value = strdup( value );
+
+	} else {
+		newpair = ht_newpair( key, value );
+
+		if( next == hashtable->table[ bin ] ) {
+			newpair->next = next;
+			hashtable->table[ bin ] = newpair;
+	
+		} else if ( next == NULL ) {
+			last->next = newpair;
+	
+		} else  {
+			newpair->next = next;
+			last->next = newpair;
+		}
+	}
 }
 
-struct hashT* deleteHT(struct hashT* hT) {
-    if (hT == NULL)
-        return NULL;
+char *ht_get( hashtable_t *hashtable, char *key ) {
+	int bin = 0;
+	entry_t *pair;
 
-    for (uint32_t curElem = 0; curElem < hT->capacity; curElem++) {
-        if (hT->state[curElem] == BUSY) {
-            free(hT->data[curElem].key);
-        }
-    }
+	bin = ht_hash( hashtable, key );
 
-    free(hT->state);
-    free(hT->data);
-    free(hT);
-    return NULL;    
+	pair = hashtable->table[ bin ];
+	while( pair != NULL && pair->key != NULL && strcmp( key, pair->key ) > 0 ) {
+		pair = pair->next;
+	}
+
+	if( pair == NULL || pair->key == NULL || strcmp( key, pair->key ) != 0 ) {
+		return NULL;
+
+	} else {
+		return pair->value;
+	}
+	
+}
+
+char* m_strcpy(char* base) {
+    if (base == NULL) return NULL;
+    int ln = strlen(base);
+    char* ret_val = (char*) malloc((ln + 1) * sizeof(char));
+    strcpy(ret_val, base);
+    return ret_val;
 }
 
 int main() {
-    uint32_t etCount = 0;
-    uint32_t arrSize = 0;
-    uint32_t findCount = 0;
-    scanf("%u %u %u", &etCount, &arrSize, &findCount);
 
-    struct hashT* myHT = newHT(100003);
+	hashtable_t *hashtable = ht_create(300007);
 
-    for (uint32_t curEt = 0; curEt < etCount; curEt++) {
-        uint32_t* etArr = (uint32_t*)calloc(arrSize, sizeof(uint32_t));
+	size_t oper_cnt = 0;
+    scanf("%lu", &oper_cnt);
 
-        for (uint32_t curElem = 0; curElem < arrSize; curElem++) {
-            scanf("%u", etArr + curElem);
+    char buff[4097];
+    char buff2[4097];
+    
+    for (size_t it = 0; it < oper_cnt; ++it) {
+        scanf("%s %s", buff, buff2);
+
+         if (strcmp(buff, "ADD") == 0) {
+            // root = AVLTreePush(root, buff, buff2);
+            scanf("%s", buff);
+            char* get_res = ht_get(hashtable, buff2);
+            if (get_res != NULL) {
+                printf("ERROR\n");
+            } else {
+                char* key = m_strcpy(buff2);
+                char* val = m_strcpy(buff);
+                ht_set(hashtable, key, val);
+            }
+        } else if (strcmp(buff, "DELETE") == 0) {
+            char* get_res = ht_get(hashtable, buff2);
+            if (get_res == NULL) {
+                printf("ERROR\n");
+            } else {
+                ht_del(hashtable, buff2);
+            }
+        } else if (strcmp(buff, "UPDATE") == 0) {
+            scanf("%s", buff);
+            // printf("'%s'", buff2);
+            char* get_res = ht_get(hashtable, buff2);
+            if (get_res == NULL) {
+                printf("ERROR\n");
+            } else {
+                char* key = m_strcpy(buff2);
+                char* val = m_strcpy(buff);
+                ht_set(hashtable, key, val);
+            }
+        } else if (strcmp(buff, "PRINT") == 0) {
+            char* get_res = ht_get(hashtable, buff2);
+            if (get_res == NULL) {
+                printf("ERROR\n");
+            } else {
+                printf("%s %s\n", buff2, get_res);
+            }
         }
 
-        fast_sort(etArr, etArr + arrSize);
-        insertHT(myHT, etArr, arrSize);
+
     }
 
-    uint32_t* findArr = (uint32_t*) malloc(arrSize * sizeof(uint32_t));
-    for (uint32_t curFind = 0; curFind < findCount; curFind++) {
-        for (uint32_t curElem = 0; curElem < arrSize; curElem++) {
-            scanf("%u", findArr + curElem);
-        }
-        fast_sort(findArr, findArr + arrSize);
-
-        if (findHT(myHT, findArr, arrSize) != -1)
-            printf("1\n");
-        else   
-            printf("0\n");
-    }
-
-    free(findArr);
-    myHT = deleteHT(myHT);
+	return 0;
 }

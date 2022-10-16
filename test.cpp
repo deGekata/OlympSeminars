@@ -1,173 +1,155 @@
-#include <iostream>
-#include <algorithm>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <inttypes.h>
 
-#define int long long
-const int INF = 1e18;
-
-struct node {
-    int priority;
-    int size;
-    int num;
-    node* left, * right;
-
-    node(int num_) {
-        priority = ((rand() << 16) + rand());
-        left = nullptr;
-        right = nullptr;
-        num = num_;
-        size = 1;
+uint32_t strHashCode(char* str) {
+    if (str == NULL) return 0;
+    uint32_t hash = 123456;
+    while (*str) {
+        hash = ((hash << 5) + hash) ^ *(str++);
     }
-};
 
-int size(node* v) {
-    if (v == nullptr)
-        return 0;
-    else
-        return v->size;
+    return hash;
 }
 
-void up(node* v) {
-    if (v == nullptr)
-        return;
-    v->size = size(v->left) + size(v->right) + 1;
+int add(char** table, int index, char* number) {
+    if (table[index][0] != 0)
+        return 1;
+    
+    int n = strlen(number);
+
+    for(size_t i = 0; i < n; ++i)
+    {
+        table[index][i] = number[i];
+    }
+
+    return 0;
 }
 
-node* merge(node* l, node* r) {
-    if (l == nullptr) return r;
-    if (r == nullptr) return l;
-
-    if (l->priority > r->priority) {
-        l->right = merge(l->right, r);
-        up(l);
-        return l;
-    }
-    else {
-        r->left = merge(l, r->left);
-        up(r);
-        return r;
-    }
-}
-
-std::pair<node*, node*> split(node* root, int k) {
-    if (root == nullptr) {
-        return { nullptr, nullptr };
-    }
-    int nw = size(root->left);
-    if (nw < k) {
-        std::pair<node*, node*> p = split(root->right, k - nw - 1);
-        root->right = p.first;
-        up(root);
-        return { root, p.second };
-    }
-    else {
-        std::pair<node*, node*> p = split(root->left, k);
-        root->left = p.second;
-        up(root);
-        return { p.first, root };
-    }
-
-}
-
-node* insert(node* root, int pos, node* v) {
-    if (root == nullptr)
-        return v;
-    std::pair<node*, node*> p1 = split(root, pos);
-    return merge(merge(p1.first, v), p1.second);
-}
-
-node* erase(node* root, int key) {
-    if (root == nullptr) {
-        return nullptr;
-    }
-    std::pair<node*, node*> p1 = split(root, key);
-    std::pair<node*, node*> p2 = split(p1.second, 1);
-    root = merge(p1.first, p2.second);
-    return root;
-}
-
-int find_by_id(node* root, int id) {
-    if (root == nullptr) {
-        return -INF;
-    }
-    if (id < size(root->left))
-        return find_by_id(root->left, id);
-    else if (size(root->left) == id)
-        return root->num;
-    else
-        return find_by_id(root->right, id - size(root->left) - 1);
-}
-
-signed main()
+int del(char** table, int index)
 {
-    std::ios_base::sync_with_stdio(false);
-    std::cin.tie(0);
-    node* dekart = nullptr;
-    int n, lol;
-    std::cin >> n >> lol;
-    int ans = 0;
-    for (int i = 0; i < n; ++i) {
-        int x;
-        std::cin >> x;
-        ans += x * x;
-        dekart = insert(dekart, i, new node(x));
+    if (table[index][0] == 0)
+        return 1;
+
+    for(size_t i = 0; i < 50; ++i)
+        table[index][i] = 0;
+    
+    return 0;
+}
+
+int edit(char** table, int index, char* new_number)
+{
+    if(table[index][0] == 0)
+        return 1;
+    
+    int n = strlen(new_number);
+
+    for(size_t i = 0; i < 50; ++i)
+        table[index][i] = 0;
+    for(size_t i = 0; i < n; ++i)
+        table[index][i] = new_number[i];
+    
+    return 0;
+}
+
+ int print(char** table, uint32_t index, char* name)
+ {
+     if (table[index][0] == 0)
+        return 1;
+    
+    printf("%s ", name);
+
+    for(size_t i = 0; i < 50; ++i)
+    {
+        if (table[index][i] == 0)
+            break;
+        printf("%c", table[index][i]);
     }
-    std::cout << ans << '\n';
-    int q;
-    std::cin >> q;
-    int nw = n;
-    while (q--) {
-        int op;
-        std::cin >> op;
-        if (op == 1) {
-            int ind;
-            std::cin >> ind;
-            --ind;
-            if (ind == 0) {
-                int x = find_by_id(dekart, 0);
-                int y = find_by_id(dekart, 1);
-                ans += 2 * x * y;
-                dekart = erase(dekart, 0);
-                dekart = erase(dekart, 0);
-                dekart = insert(dekart, 0, new node(x + y));
-                --nw;
-            }
-            else if (ind + 1 == nw) {
-                int x = find_by_id(dekart, ind);
-                int y = find_by_id(dekart, ind - 1);
-                ans += 2 * x * y;
-                dekart = erase(dekart, ind);
-                dekart = erase(dekart, ind - 1);
-                dekart = insert(dekart, ind - 1, new node(x + y));
-                --nw;
-            }
-            else {
-                int y = find_by_id(dekart, ind);
-                int x = find_by_id(dekart, ind - 1);
-                int z = find_by_id(dekart, ind + 1);
-                int num1 = y / 2;
-                int num2 = y - num1;
-                ans += 2 * num1 * x + num1 * num1 + 2 * num2 * z + num2 * num2 - y * y;
-                dekart = erase(dekart, ind - 1);
-                dekart = erase(dekart, ind - 1);
-                dekart = erase(dekart, ind - 1);
-                dekart = insert(dekart, ind - 1, new node(x + num1));
-                dekart = insert(dekart, ind, new node(z + num2));
-                --nw;
-            }
-        }
-        else {
-            int ind;
-            std::cin >> ind;
-            --ind;
-            int x = find_by_id(dekart, ind);
-            int num1 = x / 2;
-            int num2 = x - num1;
-            ans -= 2 * num1 * num2;
-            dekart = erase(dekart, ind);
-            dekart = insert(dekart, ind, new node(num1));
-            dekart = insert(dekart, ind + 1, new node(num2));
-            ++nw;
-        }
-        std::cout << ans << '\n';
+    printf("\n");
+    return 0;
+ }
+
+int main()
+{
+    int n;
+    scanf("%d", &n);
+
+    const int table_size = 300007;
+    const int max_strlen = 4098;
+    char** table = (char**) malloc(table_size * sizeof(char*));
+    // if (table == NULL)
+    //     return 1;
+
+    for(size_t i = 0; i < table_size; ++i)
+    {
+        table[i] = (char*) calloc(max_strlen, sizeof(char));
+        // if (table[i] == NULL)
+        //     return 1;
     }
+       
+
+    while(n--)
+    {
+        char* type = (char*) malloc(10 * sizeof(char));
+        // if (type == NULL)
+        //     return 1;
+        
+        scanf("%s", type);
+        if (type[0] == 'A')
+        {
+            char* name = (char*) malloc(max_strlen * sizeof(char));
+            char* number = (char*) malloc(max_strlen * sizeof(char));
+            // if (name == NULL || number == NULL)
+            //     return 1;
+
+            scanf("%s %s", name, number);
+            if (add(table, strHashCode(name) % table_size, number))
+                printf("ERROR\n");
+
+            free(name);
+            free(number);
+        }
+        if (type[0] == 'D')
+        {
+            char* name = (char*) malloc(max_strlen * sizeof(char));
+            // if (name == NULL)
+            //     return 1;
+
+            scanf("%s", name);
+            if (del(table, strHashCode(name) % table_size))
+                printf("ERROR\n");
+            free(name);
+        }
+        if (type[0] == 'E')
+        {
+            char* name = (char*) malloc(max_strlen * sizeof(char));
+            char* number = (char*) malloc(max_strlen * sizeof(char));
+            // if (name == NULL || number == NULL)
+            //     return 1;
+
+            scanf("%s %s", name, number);
+            if (edit(table, strHashCode(name) % table_size, number))
+                printf("ERROR\n");
+            free(name);
+            free(number);
+        }
+        if (type[0] == 'P')
+        {
+            char* name = (char*) malloc(max_strlen * sizeof(char));
+            // if (name == NULL)
+            //     return 1;
+
+            scanf("%s", name);
+            if (print(table, strHashCode(name) % table_size, name))
+                printf("ERROR\n");
+            free(name);
+        }
+    }
+
+    for(size_t i = 0; i < table_size; ++i)
+        free(table[i]);
+    free(table);
+
+    return 0;
 }
