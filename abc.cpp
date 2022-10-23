@@ -1,29 +1,57 @@
 #include <iostream>
-#include <algorithm>
-
-
-struct A {
-    int x;
-    A(int x) : x(x) { std::cout << "int ctor\n"; }
-    A() : x(0) { std::cout << "default ctor\n"; }
-    A(const A& other) : x(other.x) { std::cout << "copy ctor\n"; }
-};
+#include <cstdint>
 
 int main() {
+    uint16_t M = 0, N = 0;
+    std::cin >> M >> N;
 
-    size_t cnt = 10;
-    char test[sizeof(A) * cnt];
-
-    for (size_t it = 0; it < 10; ++it) {
-        new (test + sizeof(A) * it) A(23);
+    if (N > M) {
+        std::swap(N, M);
     }
 
-    
-    // data(new char[5 * 4]);
-    // for_each(data, data + 5 * 4, [] (A* ptr) {
-    //     new (ptr) A(t)
-    // });
+    uint32_t** db = new uint32_t*[2]();
+    for (uint32_t curM = 0; curM < 2; curM++) {
+        db[curM] = new uint32_t[1 << N]();
+    }
 
-    // for (unsigned i = 0; i < 2; ++i)
-    //     std::cout << p[i].x << std::endl;
+    for (int64_t curMask = 0; curMask < (1 << N); curMask++) {
+        db[0][curMask] = 1;
+    }
+
+    bool curDb = 0;
+    for (int64_t curM = 1; curM < M; curM++) {
+        for (int64_t curMask = 0; curMask < (1 << N); curMask++) {
+            for (int64_t prevMask = 0; prevMask < (1 << N); prevMask++) {
+                bool flag = 1;
+
+                for (int64_t curN = 0; (curN < (N - 1)) && flag; curN++) {
+                    bool bits[4] = {(prevMask & (1 << curN)) != 0, (prevMask & (1 << (curN + 1))) != 0,
+                                     (curMask & (1 << curN)) != 0, (curMask & (1 << (curN + 1))) != 0};
+
+                    if ((bits[0] == bits[1]) && (bits[1] == bits[2]) && (bits[2] == bits[3])) {
+                        flag = 0;
+                    }
+                }
+
+                db[!curDb][curMask] += db[curDb][prevMask] * flag;
+            }
+        }
+
+        for (int64_t curMask = 0; curMask < (1 << N); curMask++) {
+            db[curDb][curMask] = 0;
+        }
+
+        curDb = !curDb;
+    }
+
+    uint32_t answer = 0;
+    for (int64_t curMask = 0; curMask < (1 << N); curMask++) {
+        answer += db[curDb][curMask];
+    }
+    std::cout << answer << std::endl;
+
+    for (uint32_t curM = 0; curM < 2; curM++) {
+        delete[] db[curM];
+    }
+    delete[] db;
 }
