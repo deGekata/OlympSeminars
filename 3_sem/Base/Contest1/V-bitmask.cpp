@@ -1,79 +1,97 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <unordered_map>
+#include <bit>
+#include <stdio.h>
 
+std::unordered_map<uint64_t, uint64_t> dp;
+int M, N;
 
-int binsearch(std::vector<int>& vec, int elem) {
-    int lhs = -1, rhs = vec.size();
+inline uint64_t mask_place1x2(uint64_t mask, int min_zero_bit) {
+    int x = min_zero_bit % M;
+    int y = min_zero_bit / M;
+    
+    if (x < M - 1 && (mask & (1ull << (y * M + x + 1))) == 0) 
+        return (mask | (1ull << (y * M + x + 1)) | (1ull << min_zero_bit));
 
-    while(rhs - 1 > lhs) {
-        int mid = (rhs + lhs) / 2;
-        if (vec[mid] < elem) 
-            lhs = mid;
-        else
-            rhs = mid;
-    }
-
-    return rhs;
+    return mask;
 }
 
+inline uint64_t mask_place2x1(uint64_t mask, int min_zero_bit) {
+    int x = min_zero_bit % M;
+    int y = min_zero_bit / M;
+    
+    if (y < N - 1 && (mask & (1ull << ((y + 1) * M + x))) == 0) 
+        return (mask | (1ull << ((y + 1) * M + x)) | (1ull << min_zero_bit));
+
+    return mask;
+}
+
+inline uint64_t mask_place1x3(uint64_t mask, int min_zero_bit) {
+    int x = min_zero_bit % M;
+    int y = min_zero_bit / M;
+    
+    if (x < M - 2 && (mask & (1ull << (y * M + x + 1))) == 0 && (mask & (1ull << (y * M + x + 2))) == 0) 
+        return (mask | (1ull << min_zero_bit) | (1ull << (y * M + x + 1)) | (1ull << (y * M + x + 2)));
+
+    return mask;
+}
+
+inline uint64_t mask_place3x1(uint64_t mask, int min_zero_bit) {
+    int x = min_zero_bit % M;
+    int y = min_zero_bit / M;
+    
+    if (y < N - 2 && (mask & (1ull << ((y + 1) * M + x))) == 0 && (mask & (1ull << ((y + 2) * M + x))) == 0) 
+        return (mask | (1ull << min_zero_bit) | (1ull << ((y + 1) * M + x)) | (1ull << ((y + 2) * M + x)));
+
+    return mask;
+}
+
+int solve(uint64_t mask, int cur_free) {
+    if (cur_free == 0) {
+        dp.insert({mask, 1});
+    }
+    if (dp.contains(mask)) return dp.at(mask);
+
+    uint64_t ans = 0;
+
+    int min_zero_bit = __builtin_ctzll(~mask);
+
+    if (mask != mask_place1x2(mask, min_zero_bit)) {
+        ans += solve(mask_place1x2(mask, min_zero_bit), cur_free - 2);
+    }
+
+    if (mask != mask_place2x1(mask, min_zero_bit)) {
+        ans += solve(mask_place2x1(mask, min_zero_bit), cur_free - 2);
+    }
+
+    if (mask != mask_place1x3(mask, min_zero_bit)) {
+        ans += solve(mask_place1x3(mask, min_zero_bit), cur_free - 3);
+    }
+
+    if (mask != mask_place3x1(mask, min_zero_bit)) {
+        ans += solve(mask_place3x1(mask, min_zero_bit), cur_free - 3);
+    }
+
+    dp.insert({mask, ans});
+    return ans;
+}
 
 int main() {
-    int N;
-    std::cin >> N;
-
-    std::vector<int> nums(N + 1);
-    std::vector<int> cache(N + 1, INT32_MAX);
-    std::vector<int> prev(N + 1);
-    std::vector<int> mx_pos(N + 1);
-    mx_pos[0] = -1;
-
-    for (int it = 0; it < nums.size(); ++it) {
-        std::cin >> nums[it];
-    }
-
-
-    cache[0] = INT32_MIN;
-    int mx_len = 0;
-
-    for (int cur_elem = 0; cur_elem < N; ++cur_elem) {
-        
-        int ins_pos = binsearch(cache, nums[cur_elem]);
-
-        if ((cache[ins_pos - 1] < nums[cur_elem]) && ((nums[cur_elem]) < cache[ins_pos])) {
-                cache[ins_pos] = nums[cur_elem];
-                prev[cur_elem] = mx_pos[ins_pos - 1];
-                mx_pos[ins_pos] =  cur_elem;
-                mx_len = std::max(mx_len, ins_pos);
-            }
-
-    }
-// 5 10 6 12 3 24 7 8
-    // int mx_size = cache[0];
-    // int pos = 0;
-
-    // for (int it = 0; it < N; ++it) {
-    //     if (cache[it] > mx_size) {
-    //         mx_size = cache[it];
-    //         pos = it;
-    //         // std::cout << pos << " pos\n";
-    //     }
-    // }1
-
-    std::vector<int> ans;
-    int cur_pos = mx_pos[mx_len];
-    while (cur_pos != -1) {
-        ans.push_back(cur_pos);
-        cur_pos = prev[cur_pos];
-    }
-
-    std::reverse(ans.begin(), ans.end());
-    std::cout << ans.size() << " ";
-    for (int it = 0; it < ans.size(); ++it) {
-        std::cout << ans[it] << ' ';
-    }
-    
-
+    std::cin >> N >> M;
+    uint64_t mask;
+    if (M > N) std::swap(M, N);
+    // if (N * M < 2) {
+    //     std::coo
+    // }
+    // std::cin >> mask;
+    // std::cout << mask_place1x2((uint64_t)mask, __builtin_ctzll(~mask)) << "\n";
+    // std::cout << mask_place2x1((uint64_t)mask, __builtin_ctzll(~mask)) << "\n";
+    // std::cout << mask_place1x3((uint64_t)mask, __builtin_ctzll(~mask)) << "\n";
+    // std::cout << mask_place3x1((uint64_t)mask, __builtin_ctzll(~mask)) << "\n";
+    solve(0, N * M);
+    std::cout << dp[0] << "\n";
 
     return 0;
 }
